@@ -32,16 +32,30 @@
         complete: function(results) {
             results.data.forEach(function(park) {
                 var parkName = park["Official Name"] || park["Common Name"];
+                var popupContent = '<b>ID: ' + park.ID + '</b><br>' +
+                                   '<b>Name: ' + parkName + '</b><br>' +
+                                   'Status: ' + park.Status + '<br>' +
+                                   'Type: ' + park.Type + '<br>' +
+                                   'Visited: ' + (park.Visited || '') + '<br>' +
+                                   'Trip ID: ' + (park["Trip ID"] || '');
+
+                var style = {
+                    color: park.Visited ? "red" : "blue",
+                    weight: 2,
+                    opacity: 0.6,
+                    fillOpacity: 0.3
+                };
+
                 if (park.Multipolygon) {
                     var multipolygon = park.Multipolygon.replace("MULTIPOLYGON (((", "").replace(")))", "").split(", ");
                     var latlngs = multipolygon.map(function(coord) {
                         var points = coord.split(" ");
                         return [points[1], points[0]];
                     });
-                    L.polygon(latlngs).addTo(map).bindPopup('<b>' + parkName + '</b>');
+                    L.polygon(latlngs, style).addTo(map).bindPopup(popupContent);
                 } else if (park.Latitude && park.Longitude) {
                     L.marker([park.Latitude, park.Longitude]).addTo(map)
-                        .bindPopup('<b>' + parkName + '</b>');
+                        .bindPopup(popupContent);
                 }
             });
         }
