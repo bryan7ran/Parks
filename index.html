@@ -46,17 +46,25 @@
                     fillOpacity: 0.3
                 };
 
-                if (park.Multipolygon) {
-                    var multipolygon = park.Multipolygon.replace("MULTIPOLYGON (((", "").replace(")))", "").split(", ");
-                    var latlngs = multipolygon.map(function(coord) {
-                        var points = coord.split(" ");
-                        return [points[1], points[0]];
-                    });
-                    L.polygon(latlngs, style).addTo(map).bindPopup(popupContent);
-                } else if (park.Latitude && park.Longitude) {
-                    L.marker([park.Latitude, park.Longitude]).addTo(map)
-                        .bindPopup(popupContent);
+                if (park.Multipolygon && park.Multipolygon.startsWith("MULTIPOLYGON")) {
+                    try {
+                        const coords = park.Multipolygon
+                            .replace("MULTIPOLYGON ", "")
+                            .replace(/^\(\(\(/, "")
+                            .replace(/\)\)\)$/, "")
+                            .split(",")
+                            .map(coord => {
+                                const cleaned = coord.trim().replace(/[()]/g, "");
+                                const [lon, lat] = cleaned.split(/\s+/).map(Number);
+                                return [lat, lon];
+                            });
+                
+                        L.polygon(coords, style).addTo(map).bindPopup(popupContent);
+                    } catch (e) {
+                        console.warn("Failed to parse multipolygon for park ID " + park.ID, e);
+                    }
                 }
+                
             });
         }
     });
