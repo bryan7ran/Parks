@@ -26,14 +26,22 @@
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    Papa.parse("parks.csv", {
+    Papa.parse("Parks_20250721.csv", {
         download: true,
         header: true,
         complete: function(results) {
             results.data.forEach(function(park) {
-                if (park.Latitude && park.Longitude) {
+                var parkName = park["Official Name"] || park["Common Name"];
+                if (park.Multipolygon) {
+                    var multipolygon = park.Multipolygon.replace("MULTIPOLYGON (((", "").replace(")))", "").split(", ");
+                    var latlngs = multipolygon.map(function(coord) {
+                        var points = coord.split(" ");
+                        return [points[1], points[0]];
+                    });
+                    L.polygon(latlngs).addTo(map).bindPopup('<b>' + parkName + '</b>');
+                } else if (park.Latitude && park.Longitude) {
                     L.marker([park.Latitude, park.Longitude]).addTo(map)
-                        .bindPopup('<b>' + park["Park Name"] + '</b>');
+                        .bindPopup('<b>' + parkName + '</b>');
                 }
             });
         }
